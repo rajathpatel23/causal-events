@@ -82,7 +82,7 @@ def mean_pooling(model_output, attention_mask):
     return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
 
-class ContrastivePretraining(nn.Module):
+class ContrastivePretrainModel(nn.Module):
     def __init__(self, len_tokenizer, model="bert-base", pool=True, proj="mlp", temperature=0.07) -> None:
         super().__init__()
         self.temperature = temperature
@@ -91,7 +91,7 @@ class ContrastivePretraining(nn.Module):
         self.criterion = SupConLoss(self.temperature)
         self.encoder = BaseEncoder(len_tokenizer, model)
 
-    def forward(self, input_ids, attention_mask, input_ids_right, attention_mask_right):
+    def forward(self, input_ids, attention_mask, labels, input_ids_right, attention_mask_right):
         if self.pool:
             output_left = self.encoder(input_ids, attention_mask)
             output_left = mean_pooling(output_left, attention_mask)
@@ -104,8 +104,8 @@ class ContrastivePretraining(nn.Module):
             output_right = self.encoder(input_ids_right, attention_mask_right)['pooler_output']
         output = torch.cat(output_left.unsqueeze(1), output_right.unsqueeze(1), 1)
         output = F.normalize(output, dim=-1)
-        loss = 0
-        return (loss, output)
+        loss = self.criterion(output, labels)
+        return loss, output
 
 class ContrastivePretrainHead(nn.Module):
     def __init__(self, hidden_size, proj='mlp'):
@@ -214,3 +214,28 @@ class ContrastiveClassifierModel(nn.Module):
         proj_output = torch.sigmoid(proj_output)
 
         return (loss, proj_output)
+
+
+class ConstrastiveSelfSupervised(nn.Module):
+    def __init__(self, len_tokenizer:int, model:str, pool:bool = True, proj:str ='mlp', temperature:float=0.07) -> None:
+        super().__init__()
+        self.pool = pool
+        self.encoder = BaseEncoder(len_tokenizer=len_tokenizer, model=model)
+        self.temperature = temperature
+        self.criterion = SupConLoss(self.temperature)
+        self.config = self.encoder.transformer.config
+
+    def forward(self, input_ids, attention_mask, input_ids_right, attention_mask_right):
+        if self.pool:
+            output_left = self.encoder(input_ids, attention_mask)
+            output_left = mean_pooling(output_left, attention_mask=attention_mask)
+
+            output_right = self.encoder(input_ids_right, attention_mask_right)
+            output_right = mean_pooling(output_right, attention_mask=attention_mask_right)
+        else:
+            output_left = self.encoder(input_ids, attention_mask)['pooler_output']
+            output_right = self.encoder(input_ids_right, attention_mask_right)["pooler_output"]
+        output = torch.cat((output_left.unsqueeze(1), output_right.unsqueeze(1)))
+        output = F.normalize(output, dim=-1)
+        loss = self.criterion(output)
+        return loss, output
