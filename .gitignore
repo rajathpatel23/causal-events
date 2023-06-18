@@ -151,7 +151,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-/home/jovyan/work/causal-events/src/report/*
+src/report/*
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

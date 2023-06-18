@@ -135,3 +135,20 @@ class DataCollatorContrastiveClassifcation:
         batch['labels'] = torch.LongTensor(labels)
 
         return batch
+
+@dataclass
+class DataCollatorClassification:
+    tokenizer: PreTrainedTokenizerBase
+    max_length: Optional[int] = 128
+    pad_to_multiple_of: Optional[int] = None
+    return_tensors:str = "pt"
+
+    def __call__(self, input):
+        features = [x['features'] for x in input]
+        labels = [x['labels'] for x in input]
+        batch = self.tokenizer(features, padding=True, truncation=True, max_length=self.max_length, return_tensors=self.return_tensors)
+        if  "token_type_ids" in batch.keys():
+            del batch['token_type_ids']
+        batch["labels"] = torch.LongTensor(labels)
+        return batch
+

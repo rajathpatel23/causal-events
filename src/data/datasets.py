@@ -1,6 +1,5 @@
-import logging
+
 import numpy as np
-from augmentation import delete_random_tokens
 np.random.seed(42)
 
 import random
@@ -31,9 +30,9 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         data1['cluster_id'] = cluster_id_set
         data2 = data.copy()
         data2['cluster_id'] = cluster_id_set
-        data2 = data.copy()
         label_enc = LabelEncoder()
         label_enc.fit(cluster_id_set)
+        import pdb; pdb.set_trace()
         data1['features'] = data1['text']
         data2['features'] = data2['text']
         data1['labels'] = label_enc.transform(data1['cluster_id'])
@@ -42,7 +41,9 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
 
         data1 = data1.reset_index(drop=True)
         data1 = data1.fillna("")
-        data1 = self._prepare_data(data1)
+        data2 = data2.reset_index(drop=True)
+        data2 = data2.fillna("")
+
         self.data1 = data1
         self.data2 = data2
 
@@ -61,9 +62,28 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data1)
 
-    
 
+class ContrastiveClassificationDataset(torch.utils.data.Dataset):
+    def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False) -> None:
 
+        self.max_length = max_length
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
+        self.dataset_type = dataset_type
+        self.dataset = dataset
+        self.aug = aug
 
+        # if dataset == "causal-news":
+        data = pd.read_csv(path)
+        data = data.reset_index(drop=True)
+        data = data.rename(columns={"text": "features", "label": "labels"})
+        self.data = data
+
+    def __getitem__(self, idx):
+        example = self.data.iloc[idx].copy()
+        return example
+
+    def __len__(self):
+        return len(self.data)
+        
 
         

@@ -8,7 +8,7 @@ from torch.nn import BCEWithLogitsLoss
 
 class SupConLoss(nn.Module):
     def __init__(self,temperature=0.07, contrast_model="all", base_temperature=0.07) -> None:
-        super(SupConLoss).__init__()
+        super().__init__()
         self.temperature = temperature
         self.contrast_model = contrast_model
         self.base_temperature = base_temperature
@@ -64,10 +64,9 @@ class SupConLoss(nn.Module):
 
 
 class BaseEncoder(nn.Module):
-    def __init__(self, len_tokenizer, model) -> None:
-        super(BaseEncoder).__init__()
-        self.len_tokenizer = len_tokenizer
-        self.transformer = AutoModel.from_pretrained(model)
+    def __init__(self, len_tokenizer, model_name="roberta-base") -> None:
+        super().__init__()
+        self.transformer = AutoModel.from_pretrained(model_name)
         self.transformer.resize_token_embeddings(len_tokenizer)
 
     def forward(self, input_ids, attention_masks):
@@ -83,13 +82,14 @@ def mean_pooling(model_output, attention_mask):
 
 
 class ContrastivePretrainModel(nn.Module):
-    def __init__(self, len_tokenizer, model="bert-base", pool=True, proj="mlp", temperature=0.07) -> None:
+    def __init__(self, len_tokenizer, model="roberta-base", pool=True, proj="mlp", temperature=0.07, logger=None) -> None:
         super().__init__()
         self.temperature = temperature
         self.pool = pool
         self.proj =  proj
         self.criterion = SupConLoss(self.temperature)
         self.encoder = BaseEncoder(len_tokenizer, model)
+        self.logger = logger
 
     def forward(self, input_ids, attention_mask, labels, input_ids_right, attention_mask_right):
         if self.pool:
@@ -102,7 +102,7 @@ class ContrastivePretrainModel(nn.Module):
         else:
             output_left = self.encoder(input_ids, attention_mask)['pooler_output']
             output_right = self.encoder(input_ids_right, attention_mask_right)['pooler_output']
-        output = torch.cat(output_left.unsqueeze(1), output_right.unsqueeze(1), 1)
+        output = torch.cat((output_left.unsqueeze(1), output_right.unsqueeze(1)), 1)
         output = F.normalize(output, dim=-1)
         loss = self.criterion(output, labels)
         return loss, output
