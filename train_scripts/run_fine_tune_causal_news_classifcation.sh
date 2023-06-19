@@ -7,17 +7,20 @@
 
 BATCH=128
 LR=1e-3
-EPOCHS=
+EPOCHS=10
 
 export PYTHONPATH=/home/jovyan/work/causal-events/
 export CUDA_VISIBLE_DEVICES=0
 
 python train_classifier.py \
-	--model_pretrained_checkpoint="roberta-base" \
+	--model_pretrained_checkpoint /home/jovyan/work/causal-events/src/report/contrastive/causal-news-del256-2e-5-0.07-5-roberta-base/pytorch_model.bin \
     --do_train \
 	--dataset_name=abt-buy \
     --train_file /home/jovyan/work/causal-events/data/subtask1/train_subtask1.csv \
 	--valid_file /home/jovyan/work/causal-events/data/subtask1/dev_subtask1.csv \
+	--test_file  /home/jovyan/work/causal-events/data/subtask1/test_subtask1_text.csv \
+	--do_eval \
+	--do_predict \
 	--evaluation_strategy=epoch \
 	--tokenizer="roberta-base" \
 	--grad_checkpoint=False \

@@ -5,7 +5,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 import json
-
+import torch
 from copy import deepcopy
 
 import transformers
@@ -20,7 +20,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
 from transformers import EarlyStoppingCallback
 from transformers.utils.hp_naming import TrialShortNamer
-from src.data.datasets import ContrastiveClassificationDataset
+from src.data.datasets import ContrastiveClassificationDataset, ContrastiveClassificationTestData
 from src.data.data_collators import DataCollatorClassification
 
 from src.metrics import compute_metrics_bce, compute_metrics_soft_max
@@ -60,13 +60,10 @@ def main():
 
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    def get_posneg():
-        if data_args.dataset_name == "causal-news":
-            return 4
+ 
 
     def model_init():
         init_args = {}
-        pos_neg = get_posneg()
         model = AutoModelForSequenceClassification.from_pretrained(model_args.model_pretrained_checkpoint, num_labels=2)
         model.resize_token_embeddings(len(train_dataset.tokenizer))
 
@@ -96,7 +93,7 @@ def main():
     valid_dataset = ContrastiveClassificationDataset(path=data_args.valid_file, dataset_type="valid", size=None, 
                     tokenizer=model_args.tokenizer, max_length=256, dataset=data_args.dataset_name, aug=data_args.augment)
     if data_args.test_file:
-        test_dataset = ContrastiveClassificationDataset(path=data_args.test_file, dataset_type="test", size=None, 
+        test_dataset = ContrastiveClassificationTestData(path=data_args.test_file, dataset_type="test", size=None, 
                         tokenizer=model_args.tokenizer, max_length=256, dataset=data_args.dataset_name, aug=data_args.augment)
 
     data_collator = DataCollatorClassification(tokenizer=train_dataset.tokenizer)
@@ -161,8 +158,9 @@ def main():
         last_checkpoint = None
         if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
             last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        pos_neg = get_posneg()
-        model = AutoModelForSequenceClassification.from_pretrained(model_args.model_pretrained_checkpoint, num_labels=2)
+        model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
+        checkpoint = torch.load(model_args.model_pretrained_checkpoint,)
+        model.load_state_dict(checkpoint, strict=False)
         model.resize_token_embeddings(len(train_dataset.tokenizer))
 
         trainer = Trainer(
@@ -213,11 +211,12 @@ def main():
 
         if training_args.do_predict:
             logger.info("*** Predict ***")
-
+            
             predict_results = trainer.predict(
                 test_dataset,
                 metric_key_prefix="predict"
             )
+            print(predict_results)
 
             metrics = predict_results.metrics
             max_predict_samples = len(test_dataset)

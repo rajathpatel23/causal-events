@@ -87,3 +87,25 @@ class ContrastiveClassificationDataset(torch.utils.data.Dataset):
         
 
         
+class ContrastiveClassificationTestData(torch.utils.data.Dataset):
+    def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False) -> None:
+
+        self.max_length = max_length
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
+        self.dataset_type = dataset_type
+        self.dataset = dataset
+        self.aug = aug
+
+        # if dataset == "causal-news":
+        data = pd.read_csv(path)
+        data = data.reset_index(drop=True)
+        data = data.rename(columns={"text": "features"})
+        self.data = data
+
+    def __getitem__(self, idx):
+        example = self.data.iloc[idx].copy()
+        return example
+
+    def __len__(self):
+        return len(self.data)
+        
