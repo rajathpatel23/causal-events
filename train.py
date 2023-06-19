@@ -30,6 +30,7 @@ class ModelArguments:
     grad_checkpoint:Optional[bool] = field(default=True)
     temperature:Optional[float] = field(default=0.07)
     tokenizer:Optional[str] = field(default="roberta-base")
+    max_length:Optional[int] = field(default=128)
 
 
 @dataclass
@@ -70,11 +71,10 @@ if __name__ == '__main__':
     )
     logger.info(f"Training/evaluation parameters {training_args}")
 
-    train_dataset = ContrastivePretrainDataset(path=train_path, tokenizer='roberta-base', max_length=256)
-    valid_dataset = ContrastivePretrainDataset(path=valid_path, tokenizer='roberta-base', max_length=256)
-    model = ContrastivePretrainModel(len_tokenizer=256, model='roberta-base', pool='True', proj='mlp', temperature=0.07, logger=logger)
+    train_dataset = ContrastivePretrainDataset(path=train_path, tokenizer='roberta-base', max_length=model_args.max_length)
+    valid_dataset = ContrastivePretrainDataset(path=valid_path, tokenizer='roberta-base', max_length=model_args.max_length)
+    model = ContrastivePretrainModel(len_tokenizer=model_args.max_length, model='roberta-base', pool='True', proj='mlp', temperature=0.07, logger=logger)
 
-        # Setup logging
 
 
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     set_seed(training_args.seed)
 
 
-    data_collators = DataCollatorContrastivePretrainCausalNews(tokenizer=train_dataset.tokenizer)
+    data_collators = DataCollatorContrastivePretrainCausalNews(tokenizer=train_dataset.tokenizer, max_length=model_args.max_length)
     if model_args.model_pretrained_checkpoint:
         model = ContrastivePretrainModel(model_args.model_pretrained_checkpoint, len_tokenizer=len(train_dataset.tokenizer), model=model_args.tokenizer, temperature=model_args.temperature)
         if model_args.grad_checkpoint:

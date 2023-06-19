@@ -25,7 +25,7 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         self.dataset = dataset
         self.aug = aug
         data = pd.read_csv(path)
-        cluster_id_set = [x for x in range(len(data))]
+        cluster_id_set = data['label'].tolist()
         data1 = data.copy()
         data1['cluster_id'] = cluster_id_set
         data2 = data.copy()

@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef
     
 def compute_metrics_bce(eval_pred):
     logits, labels = eval_pred
@@ -13,8 +13,8 @@ def compute_metrics_bce(eval_pred):
     f1 = f1_score(labels, predictions, pos_label=1, average='binary')
     precision = precision_score(labels, predictions, pos_label=1, average='binary')
     recall = recall_score(labels, predictions, pos_label=1, average='binary')
-
-    return {"accuracy": accuracy, "f1": f1, "precision": precision, "recall": recall}
+    mcc_score = matthews_corrcoef(labels, predictions)
+    return {"accuracy": accuracy, "f1": f1, "precision": precision, "recall": recall, "mcc": mcc_score}
 
 def compute_metrics_soft_max(eval_pred):
     logits, labels = eval_pred
@@ -26,8 +26,9 @@ def compute_metrics_soft_max(eval_pred):
     f1 = f1_score(labels, predictions, pos_label=1, average='binary')
     precision = precision_score(labels, predictions, pos_label=1, average='binary')
     recall = recall_score(labels, predictions, pos_label=1, average='binary')
+    mcc_score = matthews_corrcoef(labels, predictions)
 
-    return {"accuracy": accuracy, "f1": f1, "precision": precision, "recall": recall}
+    return {"accuracy": accuracy, "f1": f1, "precision": precision, "recall": recall, "mcc": mcc_score}
 
 def compute_metrics_cosine_sim(eval_pred):
     logits, labels = eval_pred

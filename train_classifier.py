@@ -7,21 +7,25 @@ from typing import Optional
 import json
 import torch
 from copy import deepcopy
+import json
 
 import transformers
 from transformers import (
     HfArgumentParser,
+    DataCollatorWithPadding,
+    default_data_collator,
+    EvalPrediction,
     Trainer,
     TrainingArguments,
     set_seed, AutoModelForSequenceClassification
 )
-
+import numpy as np
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
 from transformers import EarlyStoppingCallback
 from transformers.utils.hp_naming import TrialShortNamer
 from src.data.datasets import ContrastiveClassificationDataset, ContrastiveClassificationTestData
-from src.data.data_collators import DataCollatorClassification
+from src.data.data_collators import DataCollatorClassification, DataCollatorClassificationTestData
 
 from src.metrics import compute_metrics_bce, compute_metrics_soft_max
 
@@ -36,6 +40,7 @@ class ModelArguments:
     frozen:Optional[bool] = field(default=False)
     grad_checkpoint:Optional[bool] = field(default=True)
     tokenizer:Optional[str] = field(default="roberta-base")
+    max_length:Optional[int] = field(default=128)
 
 
 @dataclass
@@ -89,14 +94,14 @@ def main():
 
     set_seed(training_args.seed)
     train_dataset = ContrastiveClassificationDataset(path=data_args.train_file, dataset_type="train", size=None, 
-                    tokenizer=model_args.tokenizer, max_length=256, dataset=data_args.dataset_name, aug=data_args.augment)
+                    tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment)
     valid_dataset = ContrastiveClassificationDataset(path=data_args.valid_file, dataset_type="valid", size=None, 
-                    tokenizer=model_args.tokenizer, max_length=256, dataset=data_args.dataset_name, aug=data_args.augment)
+                    tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment)
     if data_args.test_file:
-        test_dataset = ContrastiveClassificationTestData(path=data_args.test_file, dataset_type="test", size=None, 
-                        tokenizer=model_args.tokenizer, max_length=256, dataset=data_args.dataset_name, aug=data_args.augment)
+        test_dataset = ContrastiveClassificationDataset(path=data_args.test_file, dataset_type="test", size=None, 
+                        tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment)
 
-    data_collator = DataCollatorClassification(tokenizer=train_dataset.tokenizer)
+    data_collator = DataCollatorClassification(tokenizer=train_dataset.tokenizer, max_length=model_args.max_length)
     callback = EarlyStoppingCallback(early_stopping_patience=10)
 
     if training_args.do_train and model_args.do_param_opt:
@@ -114,7 +119,7 @@ def main():
             return metrics['eval_f1']
 
         trainer = Trainer(model=model_init, args=training_args, train_dataset=train_dataset, 
-        eval_dataset=valid_dataset, test_dataset=test_dataset if data_args.test_file is not None else None, 
+        eval_dataset=valid_dataset,
         data_collator=data_collator, 
         compute_metrics=compute_metrics_bce, 
         callbacks=[callback])
@@ -201,6 +206,7 @@ def main():
             logger.info("*** Evaluate ***")
 
             metrics = trainer.evaluate(
+                eval_dataset=valid_dataset,
                 metric_key_prefix="eval"
             )
             max_eval_samples = len(valid_dataset)
@@ -209,29 +215,28 @@ def main():
             trainer.log_metrics(f"eval", metrics)
             trainer.save_metrics(f"eval", metrics)
 
-        if training_args.do_predict:
-            logger.info("*** Predict ***")
-            
-            predict_results = trainer.predict(
-                test_dataset,
-                metric_key_prefix="predict"
-            )
-            print(predict_results)
 
-            metrics = predict_results.metrics
-            max_predict_samples = len(test_dataset)
-            metrics["predict_samples"] = max_predict_samples
-
-            trainer.log_metrics(f"predict", metrics)
-            trainer.save_metrics(f"predict", metrics)
+    if training_args.do_predict:
+        logger.info("*** Predict ***")
+        predictions = trainer.predict(
+            test_dataset,
+            metric_key_prefix="predict"
+        )
+        print(predictions)
+        import pdb; pdb.set_trace()
+        predictions_output = np.argmax(predictions[0], axis=1)
+        output_predict_file = os.path.join(training_args.output_dir, f"predict_results_causal_news.json")
+        with open(output_predict_file, "w") as writer:
+            for index, item in enumerate(predictions_output):
+                dict_data = {"index": index, "prediction": item.item()}
+                writer.write(f"{json.dumps(dict_data)}\n")
+    #     trainer.log_metrics(f"predict", metrics)
+    #     trainer.save_metrics(f"predict", metrics)
     return results
 
 if __name__ == '__main__':
     main()
 
 
-
-
-    
             
 
