@@ -7,16 +7,16 @@
 
 BATCH=8
 LR=2e-5
-EPOCHS=10
+EPOCHS=5
 MAX_LEN=512
 
 export PYTHONPATH=/home/jovyan/work/causal-events/
 export CUDA_VISIBLE_DEVICES=0
 
 python train_classifier.py \
-	--model_pretrained_checkpoint /home/jovyan/work/causal-events/src/report/contrastive/causal-news-512-128-2e-5-0.07-8-roberta-base/pytorch_model.bin \
+	--model_pretrained_checkpoint /home/jovyan/work/causal-events/src/report/contrastive/causal-news-512-8-2e-5-0.07-30-False-roberta-base/pytorch_model.bin \
     --do_train \
-	--dataset_name=abt-buy \
+	--dataset_name="causal-news" \
     --train_file /home/jovyan/work/causal-events/data/subtask1/train_subtask1.csv \
 	--valid_file /home/jovyan/work/causal-events/data/subtask1/dev_subtask1.csv \
 	--test_file  /home/jovyan/work/causal-events/data/subtask1/test_subtask1_text.csv \
@@ -34,7 +34,7 @@ python train_classifier.py \
 	--warmup_ratio=0.05 \
 	--max_grad_norm=1.0 \
 	--fp16 \
-	--metric_for_best_model=loss \
+	--metric_for_best_model="eval_f1" \
 	--dataloader_num_workers=4 \
 	--disable_tqdm=True \
 	--save_strategy="epoch" \

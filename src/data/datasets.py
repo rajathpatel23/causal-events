@@ -13,11 +13,10 @@ from transformers import AutoTokenizer, AutoConfig
 from sklearn.preprocessing import LabelEncoder
 
 
-
 class ContrastivePretrainDataset(torch.utils.data.Dataset):
     def __init__(self, path, tokenizer="roberta-base", max_length=128, 
                 dataset='causal-news',
-                aug=False) -> None:
+                aug=False, dev=True) -> None:
         super().__init__()
 
         self.max_length=max_length
@@ -25,10 +24,14 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         self.dataset = dataset
         self.aug = aug
         data = pd.read_csv(path)
+        if dev:
+            dev_data = pd.read_csv("/home/jovyan/work/causal-events/data/subtask1/dev_subtask1.csv")
+            data = pd.concat([data, dev_data])
         cluster_id_set = data['label'].tolist()
         data1 = data.copy()
         data1['cluster_id'] = cluster_id_set
         data2 = data.copy()
+        data2 = data2.sample(frac = 1)
         data2['cluster_id'] = cluster_id_set
         label_enc = LabelEncoder()
         label_enc.fit(cluster_id_set)
@@ -54,7 +57,7 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         pos1 = selection1.sample(1).iloc[0].copy()
 
         example2 = self.data2.loc[idx].copy()
-        selection2 = self.data2[self.data2['labels'] == example2['labels']]
+        selection2 = self.data2[self.data2['labels'] != example2['labels']]
         pos2 = selection2.sample(1).iloc[0].copy()
 
         return ((example1, pos1), (example2, pos2))

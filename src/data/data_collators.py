@@ -32,6 +32,9 @@ class DataCollatorContrastivePretrainSelfSupervised:
         return batch
 
 
+
+
+
 @dataclass
 class DataCollatorContrastivePretrain:
     tokenizer:PreTrainedTokenizerBase

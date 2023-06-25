@@ -1,9 +1,10 @@
-BATCH=128
-LR=1e-4
+BATCH=8
+LR=2e-5
 TEMP=0.07
-EPOCHS=8
+EPOCHS=30
 AUG="del"
 MAX_LEN=512
+SIMCLR=False
 
 export PYTHONPATH=/home/jovyan/work/causal-events
 export CUDA_VISIBLE_DEVICES=0
@@ -14,7 +15,7 @@ python train.py \
     --valid_file /home/jovyan/work/causal-events/data/subtask1/dev_subtask1.csv \
 	--tokenizer="roberta-base" \
 	--grad_checkpoint=True \
-    --output_dir /home/jovyan/work/causal-events/src/report/contrastive/causal-news-$MAX_LEN-$BATCH-$LR-$TEMP-$EPOCHS-roberta-base/ \
+    --output_dir /home/jovyan/work/causal-events/src/report/contrastive/causal-news-$MAX_LEN-$BATCH-$LR-$TEMP-$EPOCHS-$SIMCLR-roberta-base/ \
 	--temperature=$TEMP \
 	--per_device_train_batch_size=$BATCH \
 	--learning_rate=$LR \
