@@ -5,16 +5,16 @@
 #SBATCH --time=12:00:00
 #SBATCH --export=NONE
 
-BATCH=8
+BATCH=64
 LR=2e-5
-EPOCHS=5
-MAX_LEN=512
+EPOCHS=8
+MAX_LEN=256
 
 export PYTHONPATH=/home/jovyan/work/causal-events/
 export CUDA_VISIBLE_DEVICES=0
 
 python train_classifier.py \
-	--model_pretrained_checkpoint /home/jovyan/work/causal-events/src/report/contrastive/causal-news-512-8-2e-5-0.07-30-False-roberta-base/pytorch_model.bin \
+	--model_pretrained_checkpoint /home/jovyan/work/causal-events/src/report/contrastive/causal-news-256-378-5e-5-0.07-10-False-06-29-2023-roberta-base/pytorch_model.bin \
     --do_train \
 	--dataset_name="causal-news" \
     --train_file /home/jovyan/work/causal-events/data/subtask1/train_subtask1.csv \

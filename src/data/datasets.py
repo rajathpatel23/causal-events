@@ -41,12 +41,10 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         data1['labels'] = label_enc.transform(data1['cluster_id'])
         data2['labels'] = label_enc.transform(data2['cluster_id'])
         self.label_encoder = label_enc
-
         data1 = data1.reset_index(drop=True)
         data1 = data1.fillna("")
         data2 = data2.reset_index(drop=True)
         data2 = data2.fillna("")
-
         self.data1 = data1
         self.data2 = data2
 
