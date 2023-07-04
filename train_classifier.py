@@ -154,7 +154,7 @@ def main():
             json.dump(best_run, f)
 
     output_dir = deepcopy(training_args.output_dir)
-    for run in range(3):
+    for run in range(1):
         init_args = {}
         training_args.save_total_limit = 1
         training_args.seed = run

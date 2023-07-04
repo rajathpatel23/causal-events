@@ -68,6 +68,7 @@ class BaseEncoder(nn.Module):
         super().__init__()
         self.transformer = AutoModel.from_pretrained(model_name)
         self.transformer.resize_token_embeddings(len_tokenizer)
+        self.model_name = model_name
 
     def forward(self, input_ids, attention_masks):
         output = self.transformer(input_ids, attention_masks)

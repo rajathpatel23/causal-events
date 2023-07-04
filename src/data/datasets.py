@@ -20,7 +20,7 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         super().__init__()
 
         self.max_length=max_length
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=['[CLS]', '[SEP'])
         self.dataset = dataset
         self.aug = aug
         data = pd.read_csv(path)
@@ -36,8 +36,8 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         label_enc = LabelEncoder()
         label_enc.fit(cluster_id_set)
         import pdb; pdb.set_trace()
-        data1['features'] = data1['text']
-        data2['features'] = data2['text']
+        data1['features'] = data1['text'].str.lower()
+        data2['features'] = data2['text'].str.lower()
         data1['labels'] = label_enc.transform(data1['cluster_id'])
         data2['labels'] = label_enc.transform(data2['cluster_id'])
         self.label_encoder = label_enc
@@ -76,6 +76,8 @@ class ContrastiveClassificationDataset(torch.utils.data.Dataset):
         # if dataset == "causal-news":
         data = pd.read_csv(path)
         data = data.reset_index(drop=True)
+        import pdb; pdb.set_trace()
+        data['text']  = data['text'].str.lower()
         data = data.rename(columns={"text": "features", "label": "labels"})
         self.data = data
 
@@ -100,7 +102,10 @@ class ContrastiveClassificationTestData(torch.utils.data.Dataset):
         # if dataset == "causal-news":
         data = pd.read_csv(path)
         data = data.reset_index(drop=True)
+        
+        import pdb; pdb.set_trace()
         data = data.rename(columns={"text": "features"})
+
         self.data = data
 
     def __getitem__(self, idx):
