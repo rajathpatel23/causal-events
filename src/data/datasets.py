@@ -65,18 +65,21 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
 
 
 class ContrastiveClassificationDataset(torch.utils.data.Dataset):
-    def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False) -> None:
+    def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False, frac=1.0) -> None:
 
         self.max_length = max_length
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
         self.dataset_type = dataset_type
         self.dataset = dataset
         self.aug = aug
+        self.frac = frac
 
         # if dataset == "causal-news":
         data = pd.read_csv(path)
         data = data.reset_index(drop=True)
         import pdb; pdb.set_trace()
+        if self.frac != 1.0:
+            data = data.sample(frac=self.frac)
         data['text']  = data['text'].str.lower()
         data = data.rename(columns={"text": "features", "label": "labels"})
         self.data = data
@@ -102,10 +105,7 @@ class ContrastiveClassificationTestData(torch.utils.data.Dataset):
         # if dataset == "causal-news":
         data = pd.read_csv(path)
         data = data.reset_index(drop=True)
-        
-        import pdb; pdb.set_trace()
         data = data.rename(columns={"text": "features"})
-
         self.data = data
 
     def __getitem__(self, idx):

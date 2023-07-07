@@ -138,6 +138,8 @@ class ClassificationHead(nn.Module):
             self.hidden_size = config.hidden_size
         elif comb_fct in ['concat-abs-diff-mult']:
             self.hidden_size = 4 * config.hidden_size
+        else:
+            self.hidden_size = config.hidden_size
 
         classifier_dropout = config.hidden_dropout_prob
         
@@ -155,7 +157,6 @@ class ContrastiveClassifierModel(nn.Module):
 
     def __init__(self, len_tokenizer, checkpoint_path, model='huawei-noah/TinyBERT_General_4L_312D', pool=True, comb_fct='concat-abs-diff-mult', frozen=True, pos_neg=False):
         super().__init__()
-
         self.pool = pool
         self.frozen = frozen
         self.checkpoint_path = checkpoint_path
@@ -169,52 +170,66 @@ class ContrastiveClassifierModel(nn.Module):
         else:
             self.criterion = BCEWithLogitsLoss()
         self.classification_head = ClassificationHead(self.config, self.comb_fct)
-
         if self.checkpoint_path:
             checkpoint = torch.load(self.checkpoint_path)
             self.load_state_dict(checkpoint, strict=False)
-
         if self.frozen:
             for param in self.encoder.parameters():
                 param.requires_grad = False
-        
-    def forward(self, input_ids, attention_mask, labels, input_ids_right, attention_mask_right):
-        
+    
+    def forward(self, input_ids, attention_mask, labels):
         if self.pool:
-            output_left = self.encoder(input_ids, attention_mask)
-            output_left = mean_pooling(output_left, attention_mask)
-
-            output_right = self.encoder(input_ids_right, attention_mask_right)
-            output_right = mean_pooling(output_right, attention_mask_right)
+            output = self.encoder(input_ids, attention_mask)
+            output = mean_pooling(output, attention_mask)
         else:
-            output_left = self.encoder(input_ids, attention_mask)['pooler_output']
-            output_right = self.encoder(input_ids_right, attention_mask_right)['pooler_output']
-
-        if self.comb_fct == 'concat-abs-diff':
-            output = torch.cat((output_left, output_right, torch.abs(output_left - output_right)), -1)
-        elif self.comb_fct == 'concat-mult':
-            output = torch.cat((output_left, output_right, output_left * output_right), -1)
-        elif self.comb_fct == 'concat':
-            output = torch.cat((output_left, output_right), -1)
-        elif self.comb_fct == 'abs-diff':
-            output = torch.abs(output_left - output_right)
-        elif self.comb_fct == 'mult':
-            output = output_left * output_right
-        elif self.comb_fct == 'abs-diff-mult':
-            output = torch.cat((torch.abs(output_left - output_right), output_left * output_right), -1)
-        elif self.comb_fct == 'concat-abs-diff-mult':
-            output = torch.cat((output_left, output_right, torch.abs(output_left - output_right), output_left * output_right), -1)
-
+            output = self.encoder(input_ids, attention_mask)['pooler_output']
         proj_output = self.classification_head(output)
-
         if labels is not None:
+            # import pdb; pdb.set_trace()
             loss = self.criterion(proj_output.view(-1), labels.float())
         else:
             loss = 0
-
         proj_output = torch.sigmoid(proj_output)
-
         return (loss, proj_output)
+
+    # def forward(self, input_ids, attention_mask, labels, input_ids_right, attention_mask_right):
+        
+    #     if self.pool:
+    #         output_left = self.encoder(input_ids, attention_mask)
+    #         output_left = mean_pooling(output_left, attention_mask)
+
+    #         output_right = self.encoder(input_ids_right, attention_mask_right)
+    #         output_right = mean_pooling(output_right, attention_mask_right)
+    #     else:
+    #         output_left = self.encoder(input_ids, attention_mask)['pooler_output']
+    #         output_right = self.encoder(input_ids_right, attention_mask_right)['pooler_output']
+
+    #     if self.comb_fct == 'concat-abs-diff':
+    #         output = torch.cat((output_left, output_right, torch.abs(output_left - output_right)), -1)
+    #     elif self.comb_fct == 'concat-mult':
+    #         output = torch.cat((output_left, output_right, output_left * output_right), -1)
+    #     elif self.comb_fct == 'concat':
+    #         output = torch.cat((output_left, output_right), -1)
+    #     elif self.comb_fct == 'abs-diff':
+    #         output = torch.abs(output_left - output_right)
+    #     elif self.comb_fct == 'mult':
+    #         output = output_left * output_right
+    #     elif self.comb_fct == 'abs-diff-mult':
+    #         output = torch.cat((torch.abs(output_left - output_right), output_left * output_right), -1)
+    #     elif self.comb_fct == 'concat-abs-diff-mult':
+    #         output = torch.cat((output_left, output_right, torch.abs(output_left - output_right), output_left * output_right), -1)
+    
+
+    #     proj_output = self.classification_head(output)
+
+    #     if labels is not None:
+    #         loss = self.criterion(proj_output.view(-1), labels.float())
+    #     else:
+    #         loss = 0
+
+    #     proj_output = torch.sigmoid(proj_output)
+
+    #     return (loss, proj_output)
 
 
 class ConstrastiveSelfSupervised(nn.Module):

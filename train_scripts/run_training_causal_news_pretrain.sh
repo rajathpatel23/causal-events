@@ -1,11 +1,11 @@
 BATCH=128
 LR=5e-5
 TEMP=0.07
-EPOCHS=10
+EPOCHS=5
 AUG="del"
 MAX_LEN=256
 SIMCLR=False
-DATE=07-03-2023
+DATE=07-06-2023
 
 export PYTHONPATH=/home/jovyan/work/causal-events
 export CUDA_VISIBLE_DEVICES=0

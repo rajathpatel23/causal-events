@@ -26,7 +26,7 @@ from transformers import EarlyStoppingCallback
 from transformers.utils.hp_naming import TrialShortNamer
 from src.data.datasets import ContrastiveClassificationDataset, ContrastiveClassificationTestData
 from src.data.data_collators import DataCollatorClassification, DataCollatorClassificationTestData
-
+from src.model import ContrastiveClassifierModel
 from src.metrics import compute_metrics_bce, compute_metrics_soft_max
 
 
@@ -94,7 +94,7 @@ def main():
 
     set_seed(training_args.seed)
     train_dataset = ContrastiveClassificationDataset(path=data_args.train_file, dataset_type="train", size=None, 
-                    tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment)
+                    tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment, frac=0.3)
     valid_dataset = ContrastiveClassificationDataset(path=data_args.valid_file, dataset_type="valid", size=None, 
                     tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment)
     if data_args.test_file:
@@ -163,10 +163,12 @@ def main():
         last_checkpoint = None
         if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
             last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
-        checkpoint = torch.load(model_args.model_pretrained_checkpoint,)
-        model.load_state_dict(checkpoint, strict=False)
-        model.resize_token_embeddings(len(train_dataset.tokenizer))
+        import pdb; pdb.set_trace()
+        model = ContrastiveClassifierModel(len_tokenizer=len(train_dataset.tokenizer)+2, checkpoint_path=model_args.model_pretrained_checkpoint, model='roberta-base', pool=True, comb_fct=None, frozen=False, pos_neg=False)
+        # model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
+        # checkpoint = torch.load(model_args.model_pretrained_checkpoint,)
+        # model.load_state_dict(checkpoint, strict=False)
+        # model.resize_token_embeddings(len(train_dataset.tokenizer))
 
         trainer = Trainer(
             model = model,
@@ -174,8 +176,8 @@ def main():
             train_dataset=train_dataset,
             eval_dataset = valid_dataset,
             data_collator=data_collator,
-            compute_metrics=compute_metrics_soft_max,
-            callbacks=[callback]
+            compute_metrics=compute_metrics_bce
+            # callbacks=[callback]
         )
 
         if training_args.do_train:
@@ -222,16 +224,14 @@ def main():
             test_dataset,
             metric_key_prefix="predict"
         )
-        print(predictions)
         import pdb; pdb.set_trace()
-        predictions_output = np.argmax(predictions[0], axis=1)
+        predictions = predictions[0]
+        print(predictions)
         output_predict_file = os.path.join(training_args.output_dir, f"predict_results_causal_news.json")
         with open(output_predict_file, "w") as writer:
-            for index, item in enumerate(predictions_output):
+            for index, item in enumerate(predictions):
                 dict_data = {"index": index, "prediction": item.item()}
                 writer.write(f"{json.dumps(dict_data)}\n")
-    #     trainer.log_metrics(f"predict", metrics)
-    #     trainer.save_metrics(f"predict", metrics)
     return results
 
 if __name__ == '__main__':
