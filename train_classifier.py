@@ -41,6 +41,7 @@ class ModelArguments:
     grad_checkpoint:Optional[bool] = field(default=True)
     tokenizer:Optional[str] = field(default="roberta-base")
     max_length:Optional[int] = field(default=128)
+    dataset_fraction: Optional[float] = field(default=1.0)
 
 
 @dataclass
@@ -94,7 +95,7 @@ def main():
 
     set_seed(training_args.seed)
     train_dataset = ContrastiveClassificationDataset(path=data_args.train_file, dataset_type="train", size=None, 
-                    tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment, frac=0.3)
+                    tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment, frac=model_args.dataset_fraction)
     valid_dataset = ContrastiveClassificationDataset(path=data_args.valid_file, dataset_type="valid", size=None, 
                     tokenizer=model_args.tokenizer, max_length=model_args.max_length, dataset=data_args.dataset_name, aug=data_args.augment)
     if data_args.test_file:

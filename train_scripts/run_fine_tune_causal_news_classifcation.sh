@@ -7,11 +7,11 @@
 
 BATCH=32
 LR=2e-5
-EPOCHS=3
+EPOCHS=5
 MAX_LEN=256
-DATE=2023-07-06-rerun
+DATE=2023-07-18
 HYPERTRUE=True
-FRAC=0-3
+FRAC=0-5
 
 export PYTHONPATH=/home/jovyan/work/causal-events/
 export CUDA_VISIBLE_DEVICES=0
@@ -43,4 +43,5 @@ python train_classifier.py \
 	--save_strategy="epoch" \
 	--load_best_model_at_end \
 	--augment=$AUG \
-	--max_length=$MAX_LEN
+	--max_length=$MAX_LEN \
+	--dataset_fraction=0.5
