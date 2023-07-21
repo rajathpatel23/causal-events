@@ -55,7 +55,7 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         pos1 = selection1.sample(1).iloc[0].copy()
 
         example2 = self.data2.loc[idx].copy()
-        selection2 = self.data2[self.data2['labels'] != example2['labels']]
+        selection2 = self.data2[self.data2['labels'] == example2['labels']]
         pos2 = selection2.sample(1).iloc[0].copy()
 
         return ((example1, pos1), (example2, pos2))
