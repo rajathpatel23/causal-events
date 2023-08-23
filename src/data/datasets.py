@@ -68,7 +68,7 @@ class ContrastiveClassificationDataset(torch.utils.data.Dataset):
     def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False, frac=1.0) -> None:
 
         self.max_length = max_length
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=['[CLS]', '[SEP'])
         self.dataset_type = dataset_type
         self.dataset = dataset
         self.aug = aug

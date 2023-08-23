@@ -105,54 +105,6 @@ def main():
     data_collator = DataCollatorClassification(tokenizer=train_dataset.tokenizer, max_length=model_args.max_length)
     callback = EarlyStoppingCallback(early_stopping_patience=10)
 
-    if training_args.do_train and model_args.do_param_opt:
-        from ray import tune
-        def my_hp_space(trial):
-            return {
-                "learning_rate": tune.loguniform(5e-5, 5e-3),
-                "warmup_ratio": tune.choice([0.05, 0.075, 0.10]),
-                "max_grad_norm": tune.choice([0.0, 1.0]),
-                "weight_decay": tune.loguniform(0.001, 0.1),
-                "seed": tune.randint(1, 50)
-            }
-        
-        def my_objective(metrics):
-            return metrics['eval_f1']
-
-        trainer = Trainer(model=model_init, args=training_args, train_dataset=train_dataset, 
-        eval_dataset=valid_dataset,
-        data_collator=data_collator, 
-        compute_metrics=compute_metrics_bce, 
-        callbacks=[callback])
-
-        def hp_name(trial):
-            namer = TrialShortNamer()
-            namer.set_defaults('hp', {'learning_rate': 1e-4, 'warmup_ratio': 0.0, 'max_grad_norm': 1.0, 'weight_decay': 0.01, 'seed':1})
-            return namer.shortname(trial)
-
-        initial_configs = [
-            {
-                "learning_rate": 1e-3,
-                "warmup_ratio": 0.05,
-                "max_grad_norm": 1.0,
-                "weight_decay": 0.01,
-                "seed": 42
-            },
-            {
-                "learning_rate": 1e-4,
-                "warmup_ratio": 0.05,
-                "max_grad_norm": 1.0,
-                "weight_decay": 0.01,
-                "seed": 42
-            }
-            ]
-
-        from ray.tune.suggest.hebo import HEBOSearch
-        hebo = HEBOSearch(metric="eval_f1", mode="max", points_to_evaluate=initial_configs, random_state_seed=42)
-        best_run = trainer.hyperparameter_search(n_trials=24, direction="maximize", hp_space=my_hp_space, compute_objective=my_objective, backend='ray', resources_per_trail={'cpu':2,'gpu':1}, 
-        local_dir=f'{training_args.output_dir}ray_results/', hp_name=hp_name, search_alg=hebo)
-        with open(f"{training_args.output_dir}best_params.json", "w") as f:
-            json.dump(best_run, f)
 
     output_dir = deepcopy(training_args.output_dir)
     for run in range(1):
@@ -165,12 +117,8 @@ def main():
         if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
             last_checkpoint = get_last_checkpoint(training_args.output_dir)
         import pdb; pdb.set_trace()
-        model = ContrastiveClassifierModel(len_tokenizer=len(train_dataset.tokenizer)+2, checkpoint_path=model_args.model_pretrained_checkpoint, model='roberta-base', pool=True, comb_fct=None, frozen=False, pos_neg=False)
+        model = ContrastiveClassifierModel(len_tokenizer=len(train_dataset.tokenizer), checkpoint_path=model_args.model_pretrained_checkpoint, model='roberta-base', pool=True, comb_fct=None, frozen=True, pos_neg=False)
         import pdb; pdb.set_trace()
-        # model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
-        # checkpoint = torch.load(model_args.model_pretrained_checkpoint,)
-        # model.load_state_dict(checkpoint, strict=False)
-        # model.resize_token_embeddings(len(train_dataset.tokenizer))
 
         trainer = Trainer(
             model = model,
@@ -183,10 +131,9 @@ def main():
         )
 
         if training_args.do_train:
-            if model_args.do_param_opt:
-                for n, v in best_run.hyperparameters.items():
-                    setattr(trainer.args, n, v)
-
+            # if model_args.do_param_opt:
+            #     for n, v in best_run.hyperparameters.items():
+            #         setattr(trainer.args, n, v)
             checkpoint = None 
             if training_args.resume_from_checkpoint is not None:
                 checkpoint = training_args.resume_from_checkpoint

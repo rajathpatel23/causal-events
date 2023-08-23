@@ -185,7 +185,6 @@ class ContrastiveClassifierModel(nn.Module):
             output = self.encoder(input_ids, attention_mask)['pooler_output']
         proj_output = self.classification_head(output)
         if labels is not None:
-            # import pdb; pdb.set_trace()
             loss = self.criterion(proj_output.view(-1), labels.float())
         else:
             loss = 0

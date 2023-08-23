@@ -5,7 +5,7 @@ EPOCHS=5
 AUG="del"
 MAX_LEN=256
 SIMCLR=False
-DATE=2023-07-22
+DATE=2023-08-23
 
 export PYTHONPATH=/home/jovyan/work/causal-events
 export CUDA_VISIBLE_DEVICES=0
@@ -16,7 +16,7 @@ python train.py \
     --valid_file /home/jovyan/work/causal-events/data/subtask1/dev_subtask1.csv \
 	--tokenizer="roberta-base" \
 	--grad_checkpoint=True \
-    --output_dir /home/jovyan/work/causal-events/src/report/contrastive/causal-news-$MAX_LEN-$BATCH-$LR-$TEMP-$EPOCHS-$SIMCLR-$DATE-roberta-base/ \
+    --output_dir /home/jovyan/work/causal-events/src/report/contrastive/causal-news-$MAX_LEN-$BATCH-$LR-$TEMP-$EPOCHS-$SIMCLR-$DATE-opps-roberta-base/ \
 	--temperature=$TEMP \
 	--per_device_train_batch_size=$BATCH \
 	--learning_rate=$LR \
