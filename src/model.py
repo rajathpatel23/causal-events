@@ -192,45 +192,6 @@ class ContrastiveClassifierModel(nn.Module):
         proj_output = torch.sigmoid(proj_output)
         return (loss, proj_output)
 
-    # def forward(self, input_ids, attention_mask, labels, input_ids_right, attention_mask_right):
-        
-    #     if self.pool:
-    #         output_left = self.encoder(input_ids, attention_mask)
-    #         output_left = mean_pooling(output_left, attention_mask)
-
-    #         output_right = self.encoder(input_ids_right, attention_mask_right)
-    #         output_right = mean_pooling(output_right, attention_mask_right)
-    #     else:
-    #         output_left = self.encoder(input_ids, attention_mask)['pooler_output']
-    #         output_right = self.encoder(input_ids_right, attention_mask_right)['pooler_output']
-
-    #     if self.comb_fct == 'concat-abs-diff':
-    #         output = torch.cat((output_left, output_right, torch.abs(output_left - output_right)), -1)
-    #     elif self.comb_fct == 'concat-mult':
-    #         output = torch.cat((output_left, output_right, output_left * output_right), -1)
-    #     elif self.comb_fct == 'concat':
-    #         output = torch.cat((output_left, output_right), -1)
-    #     elif self.comb_fct == 'abs-diff':
-    #         output = torch.abs(output_left - output_right)
-    #     elif self.comb_fct == 'mult':
-    #         output = output_left * output_right
-    #     elif self.comb_fct == 'abs-diff-mult':
-    #         output = torch.cat((torch.abs(output_left - output_right), output_left * output_right), -1)
-    #     elif self.comb_fct == 'concat-abs-diff-mult':
-    #         output = torch.cat((output_left, output_right, torch.abs(output_left - output_right), output_left * output_right), -1)
-    
-
-    #     proj_output = self.classification_head(output)
-
-    #     if labels is not None:
-    #         loss = self.criterion(proj_output.view(-1), labels.float())
-    #     else:
-    #         loss = 0
-
-    #     proj_output = torch.sigmoid(proj_output)
-
-    #     return (loss, proj_output)
-
 
 class ConstrastiveSelfSupervised(nn.Module):
     def __init__(self, len_tokenizer:int, model:str, pool:bool = True, proj:str ='mlp', temperature:float=0.07) -> None:
@@ -255,3 +216,44 @@ class ConstrastiveSelfSupervised(nn.Module):
         output = F.normalize(output, dim=-1)
         loss = self.criterion(output)
         return loss, output
+
+
+class ContrastiveModel(nn.Module):
+    def __init__(
+        self,
+        len_tokenizer,
+        model="huawei-noah/TinyBERT_General_4L_312D",
+        pool=True,
+        proj="mlp",
+        temperature=0.07,
+    ):
+        """Model used for application"""
+        super().__init__()
+
+        self.pool = pool
+        self.proj = proj
+        self.temperature = temperature
+        self.criterion = SupConLoss(self.temperature)
+
+        self.encoder = BaseEncoder(len_tokenizer, model)
+        self.config = self.encoder.transformer.config
+
+    def forward(self, input_ids, attention_mask):
+        if self.pool:
+            output = self.encoder(input_ids, attention_mask)
+            output = mean_pooling(output, attention_mask)
+
+            # output_right = self.encoder(input_ids_right, attention_mask_right)
+            # output_right = mean_pooling(output_right, attention_mask_right)
+        else:
+            output = self.encoder(input_ids, attention_mask)["pooler_output"]
+            # output_right = self.encoder(input_ids_right, attention_mask_right)['pooler_output']
+
+        # output = torch.cat((output_left.unsqueeze(1), output_right.unsqueeze(1)), 1)
+
+        output = F.normalize(output, dim=-1)
+
+        # Do not calculate loss - only for application
+        loss = 0
+
+        return (loss, output)

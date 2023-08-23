@@ -166,6 +166,7 @@ def main():
             last_checkpoint = get_last_checkpoint(training_args.output_dir)
         import pdb; pdb.set_trace()
         model = ContrastiveClassifierModel(len_tokenizer=len(train_dataset.tokenizer)+2, checkpoint_path=model_args.model_pretrained_checkpoint, model='roberta-base', pool=True, comb_fct=None, frozen=False, pos_neg=False)
+        import pdb; pdb.set_trace()
         # model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
         # checkpoint = torch.load(model_args.model_pretrained_checkpoint,)
         # model.load_state_dict(checkpoint, strict=False)

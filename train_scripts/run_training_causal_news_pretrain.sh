@@ -5,7 +5,7 @@ EPOCHS=5
 AUG="del"
 MAX_LEN=256
 SIMCLR=False
-DATE=2023-07-20
+DATE=2023-07-22
 
 export PYTHONPATH=/home/jovyan/work/causal-events
 export CUDA_VISIBLE_DEVICES=0
