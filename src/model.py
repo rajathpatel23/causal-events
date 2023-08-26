@@ -92,7 +92,7 @@ class ContrastivePretrainModel(nn.Module):
         self.encoder = BaseEncoder(len_tokenizer, model)
         self.logger = logger
 
-    def forward(self, input_ids, attention_mask, labels, input_ids_right, attention_mask_right):
+    def forward(self, input_ids, attention_mask, input_ids_right, attention_mask_right, labels=None):
         if self.pool:
             output_left = self.encoder(input_ids, attention_mask)
             output_left = mean_pooling(output_left, attention_mask)

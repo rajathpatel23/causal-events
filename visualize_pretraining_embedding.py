@@ -13,14 +13,14 @@ import json
 
 if __name__ == '__main__':
     base_model="roberta-base"
-    model_name = "causal-news-256-128-5e-5-0.07-5-False-2023-07-22-roberta-base"
+    model_name = "causal-news-256-128-5e-5-0.07-5-False-2023-08-23-opps-roberta-base"
     model_directory="/home/jovyan/work/causal-events/src/report/contrastive"
     model_path=f"{model_directory}/{model_name}"
-    max_length = 256
+    max_length = 128
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     pooling = True
-    tokenizer = AutoTokenizer.from_pretrained(base_model, additional_special_tokens=("[COL]", "[VAL]"))
-    model = ContrastiveModel(len_tokenizer=len(tokenizer), model=base_model).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    model = ContrastiveModel(len_tokenizer=len(tokenizer)+2, model=base_model).to(device)
     model.load_state_dict(
         torch.load(
             "{}/pytorch_model.bin".format(model_path),

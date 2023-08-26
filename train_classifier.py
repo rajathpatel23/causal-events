@@ -116,9 +116,7 @@ def main():
         last_checkpoint = None
         if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
             last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        import pdb; pdb.set_trace()
-        model = ContrastiveClassifierModel(len_tokenizer=len(train_dataset.tokenizer), checkpoint_path=model_args.model_pretrained_checkpoint, model='roberta-base', pool=True, comb_fct=None, frozen=True, pos_neg=False)
-        import pdb; pdb.set_trace()
+        model = ContrastiveClassifierModel(len_tokenizer=len(train_dataset.tokenizer), checkpoint_path=model_args.model_pretrained_checkpoint, model='roberta-base', pool=True, comb_fct=None, frozen=False, pos_neg=False)
 
         trainer = Trainer(
             model = model,
@@ -131,9 +129,6 @@ def main():
         )
 
         if training_args.do_train:
-            # if model_args.do_param_opt:
-            #     for n, v in best_run.hyperparameters.items():
-            #         setattr(trainer.args, n, v)
             checkpoint = None 
             if training_args.resume_from_checkpoint is not None:
                 checkpoint = training_args.resume_from_checkpoint
