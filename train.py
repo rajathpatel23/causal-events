@@ -70,6 +70,7 @@ if __name__ == '__main__':
         + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
     logger.info(f"Training/evaluation parameters {training_args}")
+    logger.info(f"Using opposite example type in dataset getitem sampling")
 
     train_dataset = ContrastivePretrainDataset(path=train_path, tokenizer='roberta-base', max_length=model_args.max_length)
     valid_dataset = ContrastivePretrainDataset(path=valid_path, tokenizer='roberta-base', max_length=model_args.max_length)

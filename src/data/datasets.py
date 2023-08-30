@@ -16,11 +16,11 @@ from sklearn.preprocessing import LabelEncoder
 class ContrastivePretrainDataset(torch.utils.data.Dataset):
     def __init__(self, path, tokenizer="roberta-base", max_length=128, 
                 dataset='causal-news',
-                aug=False, dev=True) -> None:
+                aug=False, dev=False) -> None:
         super().__init__()
 
         self.max_length=max_length
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=['[CLS]', '[SEP'])
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, lower_case=True)
         self.dataset = dataset
         self.aug = aug
         data = pd.read_csv(path)
@@ -29,13 +29,14 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
             data = pd.concat([data, dev_data])
         cluster_id_set = data['label'].tolist()
         data1 = data.copy()
+        data1 = data1.reset_index(drop=True)
         data1['cluster_id'] = cluster_id_set
         data2 = data.copy()
-        data2 = data2.sample(frac = 1)
+        # df = df.sample(frac=1).reset_index(drop=True)
+        data2 = data2.sample(frac=1.0)
         data2['cluster_id'] = cluster_id_set
         label_enc = LabelEncoder()
         label_enc.fit(cluster_id_set)
-        import pdb; pdb.set_trace()
         data1['features'] = data1['text'].str.lower()
         data2['features'] = data2['text'].str.lower()
         data1['labels'] = label_enc.transform(data1['cluster_id'])
@@ -53,11 +54,10 @@ class ContrastivePretrainDataset(torch.utils.data.Dataset):
         example1 = self.data1.loc[idx].copy()
         selection1 = self.data1[self.data1['labels'] == example1['labels']]
         pos1 = selection1.sample(1).iloc[0].copy()
-
+    
         example2 = self.data2.loc[idx].copy()
-        selection2 = self.data2[self.data2['labels'] == example2['labels']]
+        selection2 = self.data2[self.data2['labels'] != example2['labels']]
         pos2 = selection2.sample(1).iloc[0].copy()
-
         return ((example1, pos1), (example2, pos2))
 
     def __len__(self):
@@ -68,7 +68,7 @@ class ContrastiveClassificationDataset(torch.utils.data.Dataset):
     def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False, frac=1.0) -> None:
 
         self.max_length = max_length
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, lower_case=True)
         self.dataset_type = dataset_type
         self.dataset = dataset
         self.aug = aug
@@ -77,7 +77,6 @@ class ContrastiveClassificationDataset(torch.utils.data.Dataset):
         # if dataset == "causal-news":
         data = pd.read_csv(path)
         data = data.reset_index(drop=True)
-        import pdb; pdb.set_trace()
         if self.frac != 1.0:
             data = data.sample(frac=self.frac)
         data['text']  = data['text'].str.lower()
@@ -97,7 +96,7 @@ class ContrastiveClassificationTestData(torch.utils.data.Dataset):
     def __init__(self, path, dataset_type, size=None, tokenizer="roberta-base", max_length=128, dataset='causal-news', aug=False) -> None:
 
         self.max_length = max_length
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, additional_special_tokens=[])
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, lower_case=True)
         self.dataset_type = dataset_type
         self.dataset = dataset
         self.aug = aug

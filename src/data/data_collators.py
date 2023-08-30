@@ -70,12 +70,9 @@ class DataCollatorContrastivePretrainCausalNews:
     def __call__(self, input_both):
         rnd = random.choice([0, 1])
         input = [x[rnd] for x in input_both]
-
         feature_left = [x[0]['features'] for x in input]
         feature_right = [x[0]['features'] for x in input]
-
         labels = [x[0]['labels'] for x in input]
-
         batch_left = self.tokenizer(feature_left, padding=True, truncation=True, max_length=self.max_length, return_tensors=self.return_tensors)
         batch_right = self.tokenizer(feature_right, padding=True, truncation=True, max_length=self.max_length, return_tensors=self.return_tensors)
 
