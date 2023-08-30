@@ -18,4 +18,5 @@ Abstract: Causal events play a crucial role in explaining the intricate relation
 |  9 | kunwarv4       | 11      | 07/07/23           | VISU          | 6.4000     | 0.5260 (7)     | 0.8585 (1)     | 0.6523 (9)     | 0.7244 (7)     | 0.4819 (8)     |
 | 10 | pakapro        | 5       | 07/06/23           | Team +1       | 9.2000     | 0.4740 (8)     | 0.4409 (9)     | 0.4568 (10)    | 0.4460 (9)     | -0.1072 (10)   |
 
-
+### Competition Link 
+https://codalab.lisn.upsaclay.fr/competitions/11784#results
