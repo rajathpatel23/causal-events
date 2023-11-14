@@ -2,6 +2,8 @@
 
 Abstract: Causal events play a crucial role in explaining the intricate relationships between the causes and effects of events. However, com- prehending causal events within discourse, text, or speech poses significant semantic chal- lenges. We propose a contrastive learning- based method in this submission to the Causal News Corpus - Event Causality Shared Task 2023, with a specific focus on Subtask 1 cen- tered on causal event classification. In our approach we pre-train our base model us- ing Supervised Contrastive (SuperCon) learn- ing. Subsequently, we fine-tune the pre-trained model for the specific task of causal event clas- sification. Our experimentation demonstrates the effectiveness of our method, achieving a competitive performance, and securing the 2nd position on the leaderboard with an F1-Score of 84.36.
 
+Paper link - https://aclanthology.org/2023.case-1.8.pdf
+
 
 ### Leadership Board Results
 
